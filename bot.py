@@ -2,7 +2,7 @@
     Name: FastDL query bot by koen
     Author: koen
     Description: A discord bot written in discord.py for players to query map download links from FastDL URL
-    Version: 0.1
+    Version: 0.2
     URL: https://github.com/notkoen
 """
 
@@ -14,89 +14,130 @@ from dotenv import load_dotenv
 import discord
 from discord import app_commands
 
-intents = discord.Intents.default()
-intents.message_content = True
+intents=discord.Intents.default()
+intents.message_content=True
 
-client = discord.Client(intents = intents)
-tree = app_commands.CommandTree(client)
-
-# Specify global variables
-FASTDL_SET = True
-ALTFASTDL_SET = True
-RPACK = True
+client=discord.Client(intents=intents)
+tree=app_commands.CommandTree(client)
 
 # Load environment variables
 load_dotenv()
-TOKEN = os.getenv('BOT_TOKEN')
+TOKEN=os.getenv('BOT_TOKEN')
 if TOKEN is None:
-    sys.Exit("Error! No bot token specified!")
+    sys.exit("Error! No bot token specified!")
 
-FASTDL = os.getenv('FASTDL_URL')
-if FASTDL is None:
-    print("Warning! No fastDL URL specified. /map and /fastdl feature will be disabled")
-    FASTDL_SET = False
-
-ALTFASTDL = os.getenv("FASTDL_URL2")
-if ALTFASTDL is None:
-    print("Warning! Alternate fastDL URL not specified. /map and /fastdl will only show one link if applicable")
-    ALTFASTDL_SET = False
-
-RESOURCEPACK = os.getenv("RESOURCE_PACK_URL")
-if RESOURCEPACK is None:
-    print("Warning! No resource pack URL specified. /resourcepack will be disabled")
-    RPACK = False
+FASTDL=os.getenv('FASTDL_URL')
+ALTFASTDL=os.getenv("FASTDL_URL2")
+RESOURCEPACK=os.getenv("RESOURCE_PACK_URL")
 
 # Bot ready event
 @client.event
 async def on_ready():
     await tree.sync()
-    print("FastDL Query Bot (v0.1) is ready!") # Included version number here
+    print("FastDL Query Bot (v0.2) is ready!") # Included version number here
 
 # Discord command for retrieving links directly to both main and alternate FastDL links
-@tree.command(name = "fastdl", description = "Get FastDL link(s)")
+@tree.command(name="fastdl", description="Get FastDL link(s)")
 async def fastdl(interaction: discord.Interaction):
-    if not FASTDL_SET and not ALTFASTDL_SET:
-        await interaction.response.send_message("Command is disabled as no FastDL link was set!")
+    if FASTDL == "" and ALTFASTDL == "":
+        embed=discord.Embed(
+            title="FastDL",
+            description="No FastDL link set! Contact <@265281929295822849> for help!",
+            color=0xFF0000
+        )
+        await interaction.response.send_message(embed=embed)
         return
-    if FASTDL_SET:
-        if ALTFASTDL_SET:
-            await interaction.response.send_message("Main FastDL:\n" + FASTDL + "\n\nBackup FastDL:\n" + ALTFASTDL)
+    if FASTDL != "":
+        if ALTFASTDL != "":
+            embed=discord.Embed(
+                title="FastDL",
+                description="Below are the links to the server's FastDL",
+                color=0x00FF00
+            )
+            embed.add_field(name="Main FastDL:", value=FASTDL, inline=False)
+            embed.add_field(name="Backup FastDL:", value=ALTFASTDL, inline=False)
+            await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message("Main FastDL:\n" + FASTDL)
 
 # Discord command for retrieving resource pack link
-@tree.command(name = "resourcepack", description = "Get resource pack link")
+@tree.command(name="resourcepack", description="Get resource pack link")
 async def resourcepack(interaction: discord.Interaction):
-    if not RPACK:
-        await interaction.response.send_message("Command is disabled as no resource pack link was set")
+    if RESOURCEPACK == "":
+        embed=discord.Embed(
+            title="Resource Pack",
+            description="No resource pack link was set! Contact <@265281929295822849> for help!",
+            color=0xFF0000
+        )
+        await interaction.response.send_message(embed=embed)
     else:
-        await interaction.response.send_message("Resource pack:\n" + RESOURCEPACK)
+        embed=discord.Embed(
+            title="Resource Pack",
+            description=RESOURCEPACK,
+            color=0x00FF00
+        )
+        await interaction.response.send_message(embed=embed)
 
 # Discord command for obtaining map download link
-@tree.command(name = "map", description = "Get map download link")
-@app_commands.describe(map_name = "Exact map name")
-@app_commands.describe(big_map = "Over 150mb")
+@tree.command(name="map", description="Get map download link")
+@app_commands.describe(map_name="Exact map name")
+@app_commands.describe(big_map="Over 150mb")
 async def downloadmap(interaction: discord.Interaction, map_name: str, big_map: bool):
-    if not FASTDL_SET and not ALTFASTDL_SET:
-        await interaction.response.send_message("FastDL link not set! No download link URL available")
+    if FASTDL == "" and ALTFASTDL == "":
+        embed=discord.Embed(
+            title="FastDL",
+            description="No FastDL link set! Contact <@265281929295822849> for help!",
+            color=0xFF0000
+        )
+        await interaction.response.send_message(embed=embed)
         return
     match big_map:
         case True:
-            if ALTFASTDL_SET:
-                await interaction.response.send_message("Download link:\n" + FASTDL + map_name + ".bsp\n\nBackup download link:\n" + ALTFASTDL + map_name + ".bsp\n\n*If both links don't work, try setting `big_map` to false!*")
+            if ALTFASTDL != "":
+                embed=discord.Embed(
+                    title="Map Download Link",
+                    description="`" + map_name + "`",
+                    color=0x00FF00
+                )
+                embed.add_field(name="Download Link:", value=FASTDL + map_name + ".bsp", inline=False)
+                embed.add_field(name="Backup Download Link:", value=ALTFASTDL + map_name + ".bsp", inline=False)
+                embed.set_footer(text="If the download links don't work, try setting 'big_map' to false!")
+                await interaction.response.send_message(embed=embed)
             else:
-                await interaction.response.send_message("Download link:\n" + FASTDL + map_name + ".bsp\n\n*If the link doesn't work, try setting `big_map` to false!*")
+                embed=discord.Embed(
+                    title="Map Download Link",
+                    description="`" + map_name + "`",
+                    color=0x00FF00
+                )
+                embed.add_field(name="Download Link:", value=FASTDL + map_name + ".bsp", inline=False)
+                embed.set_footer(text="If the download link doesn't work, try setting 'big_map' to false!")
+                await interaction.response.send_message(embed=embed)
         case False:
-            if ALTFASTDL_SET:
-                await interaction.response.send_message("Download link: \n" + FASTDL + map_name + ".bsp.bz2\n\nBackup download link:\n" + ALTFASTDL + map_name + ".bsp.bz2\n\n*If both links don't work, try setting `big_map` to true!*")
+            if ALTFASTDL != "":
+                embed=discord.Embed(
+                    title="Map Download Link",
+                    description="`" + map_name + "`",
+                    color=0x00FF00
+                )
+                embed.add_field(name="Download Link:", value=FASTDL + map_name + ".bsp.bz2", inline=False)
+                embed.add_field(name="Backup Download Link:", value=ALTFASTDL + map_name + ".bsp.bz2", inline=False)
+                embed.set_footer(text="If the download links don't work, try setting 'big_map' to false!")
+                await interaction.response.send_message(embed=embed)
             else:
-                await interaction.response.send_message("Download link: \n" + FASTDL + map_name + ".bsp.bz2\n\n*If the link doesn't work, try setting `big_map` to true!*")
+                embed=discord.Embed(
+                    title="Map Download Link",
+                    description="`" + map_name + "`",
+                    color=0x00FF00
+                )
+                embed.add_field(name="Download Link:", value=FASTDL + map_name + ".bsp.bz2", inline=False)
+                embed.set_footer(text="If the download link doesn't work, try setting 'big_map' to false!")
+                await interaction.response.send_message(embed=embed)
 
 # Start up the bot
 try:
     print("Starting up the bot")
     client.run(TOKEN)
 except discord.errors.LoginFailure:
-    sys.Exit("ERROR! Invalid bot token specified, aborting!")
+    sys.exit("ERROR! Invalid bot token specified, aborting!")
 except Exception as e:
-    sys.Exit("ERROR! Bot crashed...")
+    sys.exit("ERROR! Bot crashed...")
