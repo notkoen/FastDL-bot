@@ -124,7 +124,7 @@ async def downloadmap(interaction: discord.Interaction, map_name: str, big_map: 
                     color=0x00FF00
                 )
                 embed.add_field(name="​", value="**[Download here]("+FASTDL+map_name+".bsp)**", inline=False)
-                embed.add_field(name="Download not working?", value="**Try this backup [download link]("+ALTFASTDL+map_name+".bsp)**", inline=False)
+                embed.add_field(name="Download not working?", value="Try this backup [download link]("+ALTFASTDL+map_name+".bsp)", inline=False)
                 embed.set_footer(text="If the links don't work, try setting 'big_map' to false")
                 await interaction.response.send_message(embed=embed)
             else:
@@ -144,7 +144,7 @@ async def downloadmap(interaction: discord.Interaction, map_name: str, big_map: 
                     color=0x00FF00
                 )
                 embed.add_field(name="​", value="**[Download here]("+FASTDL+map_name+".bsp.bz2)**", inline=False)
-                embed.add_field(name="Download not working?", value="**Try this backup [download link]("+ALTFASTDL+map_name+".bsp.bz2)**", inline=False)
+                embed.add_field(name="Download not working?", value="Try this backup [download link]("+ALTFASTDL+map_name+".bsp.bz2)", inline=False)
                 embed.set_footer(text="If the links don't work, try setting 'big_map' to false")
                 await interaction.response.send_message(embed=embed)
             else:
