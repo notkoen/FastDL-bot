@@ -2,7 +2,7 @@
     Name: FastDL query bot by koen
     Author: koen
     Description: A discord bot written in discord.py for players to query map download links from FastDL URL
-    Version: 0.3
+    Version: 0.4
     URL: https://github.com/notkoen
 """
 
@@ -12,7 +12,10 @@ import sys
 from dotenv import load_dotenv
 
 import discord
+from discord.ext import commands
 from discord import app_commands
+
+import typing
 
 intents=discord.Intents.default()
 intents.message_content=True
@@ -21,7 +24,7 @@ client=discord.Client(intents=intents)
 tree=app_commands.CommandTree(client)
 
 # Version variable
-VERSION="0.3"
+VERSION="0.4"
 
 # Load environment variables
 load_dotenv()
@@ -34,11 +37,20 @@ ALTFASTDL=os.getenv("FASTDL_URL2")
 RESOURCEPACK=os.getenv("RESOURCE_PACK_URL")
 OWNER=os.getenv("BOT_OWNER")
 
+# Build up map list
+async def build_map_list():
+    global maplist
+    maplist = []
+    with open("mapcycle.txt", "r") as f:
+        for line in f:
+            maplist.append(line.strip())
+
 # Bot ready event
 @client.event
 async def on_ready():
     await tree.sync()
-    print("FastDL Query Bot (v"+VERSION +") is ready!") # Included version number here
+    await build_map_list()
+    print("FastDL Query Bot (v"+VERSION+") is ready!") # Included version number here
 
 # Discord command for retrieving bot information
 @tree.command(name="info", description="Get bot information")
@@ -102,10 +114,22 @@ async def resourcepack(interaction: discord.Interaction):
         )
         await interaction.response.send_message(embed=embed)
 
+# Autocomplete function for mapnames
+async def downloadmap_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+    ) -> typing.List[app_commands.Choice[str]]:
+    data = []
+    for mapname in maplist:
+        if current.lower() in mapname.lower():
+            data.append(app_commands.Choice(name=mapname, value=mapname))
+    return data
+
 # Discord command for obtaining map download link
 @tree.command(name="map", description="Get map download link")
 @app_commands.describe(map_name="Exact map name")
 @app_commands.describe(big_map="Over 150mb")
+@app_commands.autocomplete(map_name=downloadmap_autocomplete)
 async def downloadmap(interaction: discord.Interaction, map_name: str, big_map: bool):
     if FASTDL == "" and ALTFASTDL == "":
         embed=discord.Embed(
