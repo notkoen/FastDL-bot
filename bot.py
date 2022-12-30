@@ -2,7 +2,7 @@
     Name: FastDL query bot by koen
     Author: koen
     Description: A discord bot written in discord.py for players to query map download links from FastDL URL
-    Version: 0.4
+    Version: 0.5
     URL: https://github.com/notkoen
 """
 
@@ -24,7 +24,7 @@ client=discord.Client(intents=intents)
 tree=app_commands.CommandTree(client)
 
 # Version variable
-VERSION="0.4"
+VERSION="0.5"
 
 # Load environment variables
 load_dotenv()
@@ -84,8 +84,8 @@ async def fastdl(interaction: discord.Interaction):
                 description="Below are the links to the server's FastDL",
                 color=0x00FF00
             )
-            embed.add_field(name="​", value="**[Main FastDL]("+FASTDL+")**", inline=False)
-            embed.add_field(name="​", value="**[Backup FastDL]("+ALTFASTDL+")**", inline=False)
+            embed.add_field(name="Main FastDL Website", value=FASTDL, inline=False)
+            embed.add_field(name="Backup FastDL Website", value=ALTFASTDL, inline=False)
             await interaction.response.send_message(embed=embed)
         else:
             embed=discord.Embed(
@@ -93,7 +93,7 @@ async def fastdl(interaction: discord.Interaction):
                 description="Below is the link to the server's FastDL",
                 color=0x00FF00
             )
-            embed.add_field(name="​", value="**[FastDL]("+FASTDL+")**", inline=False)
+            embed.add_field(name="FastDL Website", value=FASTDL, inline=False)
             await interaction.response.send_message(embed=embed)
 
 # Discord command for retrieving resource pack link
@@ -127,10 +127,10 @@ async def downloadmap_autocomplete(
 
 # Discord command for obtaining map download link
 @tree.command(name="map", description="Get map download link")
-@app_commands.describe(map_name="Exact map name")
+@app_commands.describe(map="Exact map name")
 @app_commands.describe(big_map="Over 150mb")
-@app_commands.autocomplete(map_name=downloadmap_autocomplete)
-async def downloadmap(interaction: discord.Interaction, map_name: str, big_map: bool):
+@app_commands.autocomplete(map=downloadmap_autocomplete)
+async def downloadmap(interaction: discord.Interaction, map: str, big_map: bool):
     if FASTDL == "" and ALTFASTDL == "":
         embed=discord.Embed(
             title="FastDL",
@@ -143,42 +143,42 @@ async def downloadmap(interaction: discord.Interaction, map_name: str, big_map: 
         case True:
             if ALTFASTDL != "":
                 embed=discord.Embed(
-                    title="Map Download Link",
-                    description="`"+map_name+"`",
+                    title="Download Map",
+                    description="Showing download links for `"+map+"`",
                     color=0x00FF00
                 )
-                embed.add_field(name="​", value="**[Download here]("+FASTDL+map_name+".bsp)**", inline=False)
-                embed.add_field(name="Download not working?", value="Try this backup [download link]("+ALTFASTDL+map_name+".bsp)", inline=False)
-                embed.set_footer(text="If the links don't work, try setting 'big_map' to false")
+                embed.add_field(name="Download here:", value=FASTDL+map+".bsp", inline=False)
+                embed.add_field(name="Alternative download link:", value=ALTFASTDL+map+".bsp", inline=False)
+                embed.set_footer(text="If the links don't work, try setting big_map to false")
                 await interaction.response.send_message(embed=embed)
             else:
                 embed=discord.Embed(
-                    title="Map Download Link",
-                    description="`"+map_name+"`",
+                    title="Download Map",
+                    description="Showing download link for `"+map+"`",
                     color=0x00FF00
                 )
-                embed.add_field(name="​", value="**[Download here]("+FASTDL+map_name+".bsp)**", inline=False)
-                embed.set_footer(text="If the link doesn't work, try setting 'big_map' to false")
+                embed.add_field(name="Download here:", value=FASTDL+map+".bsp", inline=False)
+                embed.set_footer(text="If the link doesn't work, try setting big_map to false")
                 await interaction.response.send_message(embed=embed)
         case False:
             if ALTFASTDL != "":
                 embed=discord.Embed(
-                    title="Map Download Link",
-                    description="`"+map_name+"`",
+                    title="Download Map",
+                    description="Showing download links for `"+map+"`",
                     color=0x00FF00
                 )
-                embed.add_field(name="​", value="**[Download here]("+FASTDL+map_name+".bsp.bz2)**", inline=False)
-                embed.add_field(name="Download not working?", value="Try this backup [download link]("+ALTFASTDL+map_name+".bsp.bz2)", inline=False)
-                embed.set_footer(text="If the links don't work, try setting 'big_map' to false")
+                embed.add_field(name="Download here:", value=FASTDL+map+".bsp.bz2", inline=False)
+                embed.add_field(name="Alternative download link:", value=ALTFASTDL+map+".bsp.bz2", inline=False)
+                embed.set_footer(text="If the links don't work, try setting big_map to false")
                 await interaction.response.send_message(embed=embed)
             else:
                 embed=discord.Embed(
-                    title="Map Download Link",
-                    description="`"+map_name+"`",
+                    title="Download Map",
+                    description="Showing download link for `"+map+"`",
                     color=0x00FF00
                 )
-                embed.add_field(name="​", value="**[Download here]("+FASTDL+map_name+".bsp.bz2)**", inline=False)
-                embed.set_footer(text="If the link doesn't work, try setting 'big_map' to false")
+                embed.add_field(name="Download here:", value=FASTDL+map+".bsp.bz2", inline=False)
+                embed.set_footer(text="If the link doesn't work, try setting big_map to false")
                 await interaction.response.send_message(embed=embed)
 
 # Start up the bot
