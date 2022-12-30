@@ -2,20 +2,18 @@
     Name: FastDL query bot by koen
     Author: koen
     Description: A discord bot written in discord.py for players to query map download links from FastDL URL
-    Version: 0.5
+    Version: 0.6
     URL: https://github.com/notkoen
 """
 
 import os
 import sys
-
 from dotenv import load_dotenv
-
 import discord
 from discord.ext import commands
 from discord import app_commands
-
 import typing
+import urllib.request
 
 intents=discord.Intents.default()
 intents.message_content=True
@@ -24,7 +22,7 @@ client=discord.Client(intents=intents)
 tree=app_commands.CommandTree(client)
 
 # Version variable
-VERSION="0.5"
+VERSION="0.6"
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +34,19 @@ FASTDL=os.getenv('FASTDL_URL')
 ALTFASTDL=os.getenv("FASTDL_URL2")
 RESOURCEPACK=os.getenv("RESOURCE_PACK_URL")
 OWNER=os.getenv("BOT_OWNER")
+MAPCYCLE=os.getenv("MAPCYCLE_LINK")
+BIGMAP=os.getenv("BIGMAPS_LINK")
+
+# Download and update mapcycle files
+async def update_mapcycle():
+    if os.path.exists("mapcycle.txt"):
+        os.remove("mapcycle.txt")
+    if os.path.exists("bigmaps.txt"):
+        os.remove("bigmaps.txt")
+    urllib.request.urlretrieve(MAPCYCLE, "mapcycle.txt")
+    urllib.request.urlretrieve(BIGMAP, "bigmaps.txt")
+    if not os.path.exists("mapcycle.txt") or not os.path.exists("bigmaps.txt"):
+        sys.exit("Error! No mapcycle/bigmaps file was found!")
 
 # Build up map list
 async def build_map_list():
@@ -44,11 +55,17 @@ async def build_map_list():
     with open("mapcycle.txt", "r") as f:
         for line in f:
             maplist.append(line.strip())
+    global bigmaps
+    bigmaps = []
+    with open("bigmaps.txt", "r") as g:
+        for line in g:
+            bigmaps.append(line.strip())
 
 # Bot ready event
 @client.event
 async def on_ready():
     await tree.sync()
+    await update_mapcycle()
     await build_map_list()
     print("FastDL Query Bot (v"+VERSION+") is ready!") # Included version number here
 
@@ -120,17 +137,22 @@ async def downloadmap_autocomplete(
     current: str,
     ) -> typing.List[app_commands.Choice[str]]:
     data = []
+    count = 0
     for mapname in maplist:
         if current.lower() in mapname.lower():
             data.append(app_commands.Choice(name=mapname, value=mapname))
-    return data
+            count += 1
+    if count >= 25:
+        data.clear()
+        return data
+    else:
+        return data
 
 # Discord command for obtaining map download link
 @tree.command(name="map", description="Get map download link")
 @app_commands.describe(map="Exact map name")
-@app_commands.describe(big_map="Over 150mb")
 @app_commands.autocomplete(map=downloadmap_autocomplete)
-async def downloadmap(interaction: discord.Interaction, map: str, big_map: bool):
+async def downloadmap(interaction: discord.Interaction, map: str):
     if FASTDL == "" and ALTFASTDL == "":
         embed=discord.Embed(
             title="FastDL",
@@ -139,47 +161,53 @@ async def downloadmap(interaction: discord.Interaction, map: str, big_map: bool)
         )
         await interaction.response.send_message(embed=embed)
         return
-    match big_map:
-        case True:
-            if ALTFASTDL != "":
-                embed=discord.Embed(
-                    title="Download Map",
-                    description="Showing download links for `"+map+"`",
-                    color=0x00FF00
-                )
-                embed.add_field(name="Download here:", value=FASTDL+map+".bsp", inline=False)
-                embed.add_field(name="Alternative download link:", value=ALTFASTDL+map+".bsp", inline=False)
-                embed.set_footer(text="If the links don't work, try setting big_map to false")
-                await interaction.response.send_message(embed=embed)
-            else:
-                embed=discord.Embed(
-                    title="Download Map",
-                    description="Showing download link for `"+map+"`",
-                    color=0x00FF00
-                )
-                embed.add_field(name="Download here:", value=FASTDL+map+".bsp", inline=False)
-                embed.set_footer(text="If the link doesn't work, try setting big_map to false")
-                await interaction.response.send_message(embed=embed)
-        case False:
-            if ALTFASTDL != "":
-                embed=discord.Embed(
-                    title="Download Map",
-                    description="Showing download links for `"+map+"`",
-                    color=0x00FF00
-                )
-                embed.add_field(name="Download here:", value=FASTDL+map+".bsp.bz2", inline=False)
-                embed.add_field(name="Alternative download link:", value=ALTFASTDL+map+".bsp.bz2", inline=False)
-                embed.set_footer(text="If the links don't work, try setting big_map to false")
-                await interaction.response.send_message(embed=embed)
-            else:
-                embed=discord.Embed(
-                    title="Download Map",
-                    description="Showing download link for `"+map+"`",
-                    color=0x00FF00
-                )
-                embed.add_field(name="Download here:", value=FASTDL+map+".bsp.bz2", inline=False)
-                embed.set_footer(text="If the link doesn't work, try setting big_map to false")
-                await interaction.response.send_message(embed=embed)
+    
+    found = False
+    for search in bigmaps:
+        if search == map:
+            found = True
+            break
+        
+    if found == True:
+        if ALTFASTDL != "":
+            embed=discord.Embed(
+                title="Download Map",
+                description="Showing download links for `"+map+"`",
+                color=0x00FF00
+            )
+            embed.add_field(name="Download here:", value=FASTDL+map+".bsp", inline=False)
+            embed.add_field(name="Alternative download link:", value=ALTFASTDL+map+".bsp", inline=False)
+            embed.set_footer(text="If the links don't work, contact koen#4977")
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed=discord.Embed(
+                title="Download Map",
+                description="Showing download link for `"+map+"`",
+                color=0x00FF00
+            )
+            embed.add_field(name="Download here:", value=FASTDL+map+".bsp", inline=False)
+            embed.set_footer(text="If the link does't work, contact koen#4977")
+            await interaction.response.send_message(embed=embed)
+    else:
+        if ALTFASTDL != "":
+            embed=discord.Embed(
+                title="Download Map",
+                description="Showing download links for `"+map+"`",
+                color=0x00FF00
+            )
+            embed.add_field(name="Download here:", value=FASTDL+map+".bsp.bz2", inline=False)
+            embed.add_field(name="Alternative download link:", value=ALTFASTDL+map+".bsp.bz2", inline=False)
+            embed.set_footer(text="If the links don't work, contact koen#4977")
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed=discord.Embed(
+                title="Download Map",
+                description="Showing download link for `"+map+"`",
+                color=0x00FF00
+            )
+            embed.add_field(name="Download here:", value=FASTDL+map+".bsp.bz2", inline=False)
+            embed.set_footer(text="If the link does't work, contact koen#4977")
+            await interaction.response.send_message(embed=embed)
 
 # Start up the bot
 try:

@@ -1,4 +1,5 @@
 de_dust2
 de_mirage
-cs_office
 cs_assault
+cs_office
+dz_sirocco
